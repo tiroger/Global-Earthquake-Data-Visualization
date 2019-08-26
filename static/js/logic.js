@@ -12,8 +12,9 @@ function createFeatures(earthquakeData) {
     // Define a function we want to run once for each feature in the features array
     // Give each feature a popup describing the place and time of the earthquake
     function onEachFeature(feature, layer) {
-        layer.bindPopup("<h3>" + feature.properties.place +
-            "</h3><hr><p>" + new Date(feature.properties.time) + "</p>");
+        layer.bindPopup(
+            "<h4 style='text-align:center;'>" + new Date(feature.properties.time) +
+            "</h4> <hr> <h5 style='text-align:center;'>" + feature.properties.title + "</h5>");
     }
 
     // Define function to create the circle radius based on the magnitude
