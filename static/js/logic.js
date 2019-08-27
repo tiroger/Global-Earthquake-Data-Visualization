@@ -2,64 +2,70 @@
 var queryUrl = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geojson"
 
 // Perform a GET request to the query URL
-d3.json(queryUrl, function (data) {
-    createFeatures(data.features);
-    console.log(data.features)
+d3.json(queryUrl, function(data) {
+  console.log(data.features),
+  createFeatures(data.features);
 });
 
 function createFeatures(earthquakeData) {
 
-    // Define a function we want to run once for each feature in the features array
+    // Define a function for each feature in the features array
     // Give each feature a popup describing the place and time of the earthquake
     function onEachFeature(feature, layer) {
-        layer.bindPopup(
-            "<h4 style='text-align:center;'>" + new Date(feature.properties.time) +
-            "</h4> <hr> <h5 style='text-align:center;'>" + feature.properties.title + "</h5>");
+      // console.log(feature.properties.mag)
+      // console.log(feature.properties.place)
+      // console.log(Date(feature.properties.time))
+      layer.bindPopup("<h5> Location: " + feature.properties.place +
+        "</h5><hr><h6> Date and Time: "  + new Date(feature.properties.time) + "</h6>");
+          }
+
+      // Define function to set the circle color based on the magnitude
+      function circleColor(magnitude) {
+          if (magnitude < 1) {
+              return "#ccff33"
+              }
+          else if (magnitude < 2) {
+              return "#ffff33"
+            }
+          else if (magnitude < 3) {
+              return "#ffcc33"
+              }
+          else if (magnitude < 4) {
+              return "#ff9933"
+              }
+          else if (magnitude < 5) {
+              return "#ff6633"
+          }
+          else {
+              return "#ff3333"
+              }
+          }
+      // Create Circles with magnitude as fill color
+      function pointToLayer(feature,latlng) {
+          return new L.circle(latlng, {
+                  stroke: true,
+                  color: "gray",
+                  weight: .4,
+                  fillOpacity: .6,
+                  fillColor: circleColor(feature.properties.mag),
+                  radius:  feature.properties.mag * 34000
+              })
+          }
+      // Create a GeoJSON layer containing the features array on the earthquakeData object
+      // Run the onEachFeature function once for each piece of data in the array
+      var earthquakes = L.geoJSON(earthquakeData, {
+            onEachFeature: onEachFeature,
+            pointToLayer: pointToLayer
+          });
+
+      // Sending our earthquakes layer to the createMap function
+      createMap(earthquakes);
     }
 
-    // Define function to create the circle radius based on the magnitude
-    function radiusSize(magnitude) {
-        return magnitude * 20000;
-    }
-
-    // Define function to set the circle color based on the magnitude
-    function circleColor(magnitude) {
-        if (magnitude < 1) {
-            return "#ccff33"
-        }
-        else if (magnitude < 2) {
-            return "#ffff33"
-        }
-        else if (magnitude < 3) {
-            return "#ffcc33"
-        }
-        else if (magnitude < 4) {
-            return "#ff9933"
-        }
-        else if (magnitude < 5) {
-            return "#ff6633"
-        }
-        else {
-            return "#ff3333"
-        }
-    }
-
-    // Create a GeoJSON layer containing the features array on the earthquakeData object
-    // Run the onEachFeature function once for each piece of data in the array
-    var earthquakes = L.geoJSON(earthquakeData, {
-        pointToLayer: function (earthquakeData, latlng) {
-            return L.circle(latlng, {
-                radius: radiusSize(earthquakeData.properties.mag),
-                color: circleColor(earthquakeData.properties.mag),
-                fillOpacity: 1
-            });
-        },
-        onEachFeature: onEachFeature
-    });
-
-    // Sending our earthquakes layer to the createMap function
-    createMap(earthquakes);
-}
+    // // Define function to create the circle radius based on the magnitude
+    // function radiusSize(magnitude) {
+    //     return magnitude * 20000;
+    // }
 
 function createMap(earthquakes) {
 
@@ -85,6 +91,17 @@ function createMap(earthquakes) {
         accessToken: API_KEY
     });
 
+    // Query to retrieve the faultline data
+    var faultlinequery = "https://raw.githubusercontent.com/fraxen/tectonicplates/master/GeoJSON/PB2002_plates.json";
+
+    // Create the faultlines and add them to the faultline layer
+    d3.json(faultlinequery, function (data) {
+        L.geoJSON(data, {
+            style: function () {
+                return { color: "orange", fillOpacity: 0 }
+            }
+        }).addTo(faultLine)
+    })
     // Create the faultline layer
     var faultLine = new L.LayerGroup();
 
@@ -107,7 +124,7 @@ function createMap(earthquakes) {
             37.09, -95.71
         ],
         zoom: 4,
-        layers: [outdoorsmap, earthquakes, faultLine]
+        layers: [earthquakes, outdoorsmap]
     });
 
     // Create a layer control
@@ -117,46 +134,47 @@ function createMap(earthquakes) {
         collapsed: false
     }).addTo(myMap);
 
-    // Query to retrieve the faultline data
-    var faultlinequery = "https://raw.githubusercontent.com/fraxen/tectonicplates/master/GeoJSON/PB2002_plates.json";
 
-    // Create the faultlines and add them to the faultline layer
-    d3.json(faultlinequery, function (data) {
-        L.geoJSON(data, {
-            style: function () {
-                return { color: "orange", fillOpacity: 0 }
-            }
-        }).addTo(faultLine)
-    })
 
     // color function to be used when creating the legend
-    function getColor(d) {
-        return d > 5 ? '#ff3333' :
-            d > 4 ? '#ff6633' :
-                d > 3 ? '#ff9933' :
-                    d > 2 ? '#ffcc33' :
-                        d > 1 ? '#ffff33' :
-                            '#ccff33';
+    function circleColor(magnitude) {
+        if (magnitude <= 1) {
+            return "#ccff33"
+        }
+        else if (magnitude <= 2) {
+            return "#ffff33"
+        }
+        else if (magnitude <= 3) {
+            return "#ffcc33"
+        }
+        else if (magnitude <= 4) {
+            return "#ff9933"
+        }
+        else if (magnitude <= 5) {
+            return "#ff6633"
+        }
+        else {
+            return "#ff3333"
+        }
     }
 
     // Add legend to the map
-    var legend = L.control({ position: 'bottomright' });
+    var legend = L.control({position: 'bottomright'});
 
-    legend.onAdd = function (map) {
+    legend.onAdd = function(map) {
 
-        var div = L.DomUtil.create('div', 'info legend'),
-            mags = [0, 1, 2, 3, 4, 5],
-            labels = [];
+      var div = L.DomUtil.create('div','info legend'),
+          magnitudes = [0,1,2,3,4,5],
+          labels = [];
 
-        // loop through our density intervals and generate a label with a colored square for each interval
-        for (var i = 0; i < mags.length; i++) {
-            div.innerHTML +=
-                '<i style="background:' + getColor(mags[i] + 1) + '"></i> ' +
-                mags[i] + (mags[i + 1] ? '&ndash;' + mags[i + 1] + '<br>' : '+');
+      div.innerHTML += "<h6 style='margin:4px'>Magnitude</h6>"
+      // loop through our density intervals and generate a label for each interval
+      for (var i=0; i < magnitudes.length; i++){
+        div.innerHTML +=
+          '<i style="background:' + circleColor(magnitudes[i] + 1) + '"></i> ' +
+          magnitudes[i] + (magnitudes[i+1]?'&ndash;' + magnitudes[i+1] +'<br>': '+');
         }
-
         return div;
     };
-
     legend.addTo(myMap);
-}
+};
