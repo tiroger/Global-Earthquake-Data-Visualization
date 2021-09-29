@@ -15,8 +15,8 @@ function createFeatures(earthquakeData) {
       // console.log(feature.properties.mag)
       // console.log(feature.properties.place)
       // console.log(Date(feature.properties.time))
-      layer.bindPopup("<h6> Location: " + feature.properties.place + "<h6>Magnitude: " + feature.properties.mag + "</h6>" +
-        "</h6><hr><h6><i>"  + new Date(feature.properties.time) + "</i></h6>");
+      layer.bindPopup("<h6> Location: " + feature.properties.place + "</h6><h6>Magnitude: " + feature.properties.mag + "</h6>" +
+        "<hr><i>"  + new Date(feature.properties.time) + "</i>");
           }
 
       // Function to set the circle color based on the magnitude
@@ -44,14 +44,13 @@ function createFeatures(earthquakeData) {
       // Function to create circles with magnitude as fill color
       function pointToLayer(feature,latlng) {
           return new L.circle(latlng, {
-                  stroke: true,
-                  color: "gray",
-                  weight: .4,
+                  stroke: false,
                   fillOpacity: .6,
                   fillColor: circleColor(feature.properties.mag),
                   radius:  feature.properties.mag * 20000
               })
           }
+
       // Creating a GeoJSON layer containing the features array on the earthquakeData object
       // Run the onEachFeature function once for each piece of data in the array
       var earthquakes = L.geoJSON(earthquakeData, {
@@ -66,7 +65,7 @@ function createFeatures(earthquakeData) {
 // Function to create the map
 function createMap(earthquakes) {
 
-    // Define outdoormap, light, and dark map layers
+    // Defining outdoormap, light, and dark map layers
     var outdoorsmap = L.tileLayer("https://api.mapbox.com/styles/v1/mapbox/outdoors-v11/tiles/{z}/{x}/{y}?access_token={accessToken}", {
         attribution: "Map data &copy; <a href=\"https://www.openstreetmap.org/\">OpenStreetMap</a> contributors, <a href=\"https://creativecommons.org/licenses/by-sa/2.0/\">CC-BY-SA</a>, Imagery © <a href=\"https://www.mapbox.com/\">Mapbox</a>",
         maxZoom: 18,
@@ -74,7 +73,7 @@ function createMap(earthquakes) {
         accessToken: API_KEY
     });
 
-    var satellitemap = L.tileLayer("https://api.mapbox.com/styles/v1/mapbox/dark-v9/tiles/{z}/{x}/{y}?access_token={accessToken}", {
+    var darkmap = L.tileLayer("https://api.mapbox.com/styles/v1/mapbox/dark-v9/tiles/{z}/{x}/{y}?access_token={accessToken}", {
         attribution: "Map data &copy; <a href=\"https://www.openstreetmap.org/\">OpenStreetMap</a> contributors, <a href=\"https://creativecommons.org/licenses/by-sa/2.0/\">CC-BY-SA</a>, Imagery © <a href=\"https://www.mapbox.com/\">Mapbox</a>",
         maxZoom: 18,
         id: "mapbox.dark",
@@ -106,13 +105,13 @@ function createMap(earthquakes) {
     var baseMaps = {
         "Outdoor Map": outdoorsmap,
         "Light Map": grayscalemap,
-        "Dark Map": satellitemap
+        "Dark Map": darkmap
     };
 
     // Creating overlay object to hold our overlay layer
     var overlayMaps = {
-        Earthquakes: earthquakes,
-        FaultLines: faultLine
+        "Plate Bounderies": faultLine,
+        "Earthquakes": earthquakes
     };
 
     // Creating the map with streetmap and earthquakes layers displayed on load
@@ -128,12 +127,12 @@ function createMap(earthquakes) {
     // Passing in our baseMaps and overlayMaps
     // Adding the layer control to the map
     L.control.layers(baseMaps, overlayMaps, {
-        collapsed: false
+        collapsed: true
     }).addTo(myMap);
 
 
 
-    // color function to be used when creating the legend
+    // Color function to be used when creating the legend
     function circleColor(magnitude) {
         if (magnitude <= 1) {
             return "#ccff33"

@@ -15,9 +15,12 @@ html {
 
 .jumbotron h1 {
 color:#1f66a8;
-font-size:48px
 font-weight:bold
-font-family:'Shift', sans-serif;
+}
+
+.display-4{
+  /* font-family: 'Earthquake', sans-serif; */
+  font-size:68px
 }
 
 .info {
